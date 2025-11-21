@@ -13,7 +13,7 @@ const register = async (req, res) => {
     const hashed = await bcrypt.hash(password, salt);
     const farmer = await Farmer.create({ name, email, password: hashed });
     const token = jwt.sign({ id: farmer._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
-    res.json({ token, farmerId: farmer._id });
+    return res.json({success: true, message: 'Registered successfully!', token, farmerId: farmer._id});
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -29,7 +29,8 @@ const login = async (req, res) => {
     const match = await bcrypt.compare(password, farmer.password);
     if (!match) return res.status(400).json({ message: 'Invalid credentials' });
     const token = jwt.sign({ id: farmer._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
-    res.json({ token, farmerId: farmer._id });
+    return res.json({success: true, message: 'Logged in successfully!', token, farmerId: farmer._id});
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
