@@ -6,10 +6,13 @@ const activityRoutes = require('./routes/activity.routes');
 const chatRoutes = require('./routes/chat.routes');
 const aiRoutes = require('./routes/ai.routes');
 const weatherRoutes = require('./routes/weather.routes');
+const bodyParser = require('body-parser');
+const weatheralert = require('./cron/weatherAlert.cron');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.json({ limit: '100mb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/farmer', farmerRoutes);
@@ -17,6 +20,7 @@ app.use('/api/activity', activityRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/advisory', aiRoutes);
 app.use('/api/weather', weatherRoutes);
+
 
 app.get('/', (req, res) => res.send('Krishi Sakhi Backend is running'));
 

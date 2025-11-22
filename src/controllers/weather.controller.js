@@ -1,4 +1,5 @@
 const { getWeather } = require('../services/weather.service');
+const { sendWhatsApp } = require("../services/whatsapp.service");
 
 const weather = async (req, res) => {
   try {
@@ -12,4 +13,22 @@ const weather = async (req, res) => {
   }
 };
 
-module.exports = { weather };
+
+testWeatherAlert = async (req, res) => {
+  try {
+    const phone = "+919140395305"; // Farmer's WhatsApp number
+
+    await sendWhatsApp(
+      "മഴ വരാൻ സാധ്യത. ഇന്നത്തെ എല്ലാ സ്പ്രേയും ഒഴിവാക്കുക." ,
+      phone
+    );
+
+    res.json({ message: "Weather test alert sent" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to send" });
+  }
+};
+
+
+module.exports = { weather  , testWeatherAlert };
+

@@ -1,6 +1,7 @@
 const Farmer = require('../models/Farmer');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendWhatsApp } = require("../services/whatsapp.service");
 
 const register = async (req, res) => {
   try {
@@ -13,7 +14,7 @@ const register = async (req, res) => {
     const hashed = await bcrypt.hash(password, salt);
     const farmer = await Farmer.create({ name, email, password: hashed });
     const token = jwt.sign({ id: farmer._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
-    return res.json({success: true, message: 'Registered successfully!', token, farmerId: farmer._id});
+    return res.json({ success: true, message: 'Registered successfully!', token, farmerId: farmer._id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -29,7 +30,19 @@ const login = async (req, res) => {
     const match = await bcrypt.compare(password, farmer.password);
     if (!match) return res.status(400).json({ message: 'Invalid credentials' });
     const token = jwt.sign({ id: farmer._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
-    return res.json({success: true, message: 'Logged in successfully!', token, farmerId: farmer._id});
+    // src/controllers/alert.controller.js
+
+   
+        const phone = "+919140395305"; // Farmer's WhatsApp number
+
+        await sendWhatsApp(
+          body = `Dear ${farmer.name}, you have successfully logged in to Krishi Sakhi.`,
+          phone
+        );
+
+ 
+
+    return res.json({ success: true, message: 'Logged in successfully!', token, farmerId: farmer._id });
 
   } catch (err) {
     console.error(err);

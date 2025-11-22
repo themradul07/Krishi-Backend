@@ -2,7 +2,8 @@ const Farmer = require('../models/Farmer');
 
 const getFarmer = async (req, res) => {
   try {
-    const farmer = await Farmer.findById(req.params.id).select('-password');
+    console.log("this is the " , req.farmerId);
+    const farmer = await Farmer.findById(req.farmerId).select('-password');
     if (!farmer) return res.status(404).json({ message: 'Farmer not found' });
     res.json(farmer);
   } catch (err) {
@@ -14,6 +15,7 @@ const getFarmer = async (req, res) => {
 const updateFarmer = async (req, res) => {
   try {
     const updates = req.body;
+    console.log(updates);
     const farmer = await Farmer.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
     res.json(farmer);
   } catch (err) {
