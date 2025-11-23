@@ -1,0 +1,196 @@
+[
+  {
+    "crop": "paddy",
+    "variety": "general",
+    "cycleDays": 120,
+    "activities": [
+      {
+        "name": "Land Preparation",
+        "relativeDay": -14,
+        "windowDays": 7,
+        "notes": {
+          "ml": "നിലം തയ്യാറാക്കൽ തുടങ്ങുക. നല്ല രീതിയിൽ കവരും പോലെ അടുക്കുക.",
+          "en": "Begin land preparation. Level and plough the field properly."
+        }
+      },
+      {
+        "name": "Nursery Preparation",
+        "relativeDay": -7,
+        "windowDays": 3,
+        "notes": {
+          "ml": "തൈകൾക്കായി നഴ്‌സറി തയ്യാർ ചെയ്യുക.",
+          "en": "Prepare the nursery for seedlings."
+        }
+      },
+      {
+        "name": "Transplanting",
+        "relativeDay": 0,
+        "windowDays": 5,
+        "notes": {
+          "ml": "തൈകൾ വയലിൽ മാറ്റി നട്ട് സ്ഥാപിക്കുക.",
+          "en": "Transplant the seedlings to the main field."
+        }
+      },
+      {
+        "name": "First Fertilizer Dose",
+        "relativeDay": 20,
+        "windowDays": 3,
+        "notes": {
+          "ml": "ഒന്നാം വളപ്രയോഗം ചിത്രം അനുസരിച്ച് കൊടുക്കുക.",
+          "en": "Apply the first fertilizer dose as per recommendation."
+        }
+      },
+      {
+        "name": "Weeding",
+        "relativeDay": 30,
+        "windowDays": 5,
+        "notes": {
+          "ml": "വയലിൽ പായൽ/പുല്ല് നീക്കം ചെയ്യുക.",
+          "en": "Remove weeds from the field."
+        }
+      },
+      {
+        "name": "Pest Watch — Stem Borer",
+        "relativeDay": 45,
+        "windowDays": 7,
+        "notes": {
+          "ml": "സ്റ്റം ബോറർ രോഗസാധ്യത. വയലിൽ പരിശോധന നടത്തുക.",
+          "en": "High risk of stem borer. Inspect field carefully."
+        }
+      },
+      {
+        "name": "Harvest",
+        "relativeDay": 120,
+        "windowDays": 7,
+        "notes": {
+          "ml": "വിളവെടുപ്പ് തുടങ്ങാം. ധാന്യം ഉണക്കി സൂക്ഷിക്കുക.",
+          "en": "Begin harvest. Dry and store grains properly."
+        }
+      }
+    ]
+  },
+
+  {
+    "crop": "brinjal",
+    "variety": "general",
+    "cycleDays": 90,
+    "activities": [
+      {
+        "name": "Land Preparation",
+        "relativeDay": -10,
+        "windowDays": 5,
+        "notes": {
+          "ml": "നിലം നന്നായി ഉഴുത് സജ്ജീകരിക്കുക.",
+          "en": "Prepare and plough the land well."
+        }
+      },
+      {
+        "name": "Transplanting",
+        "relativeDay": 0,
+        "windowDays": 3,
+        "notes": {
+          "ml": "തൈകൾ വയലിൽ മാറ്റി നട്ട് തുടങ്ങുക.",
+          "en": "Begin transplanting seedlings to the main field."
+        }
+      },
+      {
+        "name": "First Irrigation",
+        "relativeDay": 3,
+        "windowDays": 2,
+        "notes": {
+          "ml": "മൊത്തമായ ആദ്യത്തെ ജലസേചനം നൽകുക.",
+          "en": "Provide the first irrigation after transplanting."
+        }
+      },
+      {
+        "name": "Fertilizer Application",
+        "relativeDay": 15,
+        "windowDays": 4,
+        "notes": {
+          "ml": "വളപ്രയോഗം ശുപാർശ പ്രകാരം നടത്തുക.",
+          "en": "Apply fertilizer as per recommended dose."
+        }
+      },
+      {
+        "name": "Pest Watch — Fruit & Shoot Borer",
+        "relativeDay": 25,
+        "windowDays": 7,
+        "notes": {
+          "ml": "ഫ്രൂട്ട് & ഷൂട്ട് ബോറർ രോഗസാധ്യത. തൈകൾ പരിശോധിക്കുക.",
+          "en": "Risk of fruit & shoot borer. Inspect plants regularly."
+        }
+      },
+      {
+        "name": "Harvesting",
+        "relativeDay": 70,
+        "windowDays": 7,
+        "notes": {
+          "ml": "വിളവെടുപ്പ് തുടങ്ങുക. പ്രതിവാരംമാത്രം കൊയ്യുക.",
+          "en": "Start harvesting. Harvest weekly for higher yield."
+        }
+      }
+    ]
+  },
+
+  {
+    "crop": "banana",
+    "variety": "nendran",
+    "cycleDays": 300,
+    "activities": [
+      {
+        "name": "Pit Preparation",
+        "relativeDay": -20,
+        "windowDays": 10,
+        "notes": {
+          "ml": "കുഴികൾ തയ്യാറാക്കി, ജൈവവളം ചേർക്കുക.",
+          "en": "Prepare pits and apply organic manure."
+        }
+      },
+      {
+        "name": "Planting Suckers",
+        "relativeDay": 0,
+        "windowDays": 7,
+        "notes": {
+          "ml": "തൈകൾ കുഴിയിൽ നട്ട് സ്ഥാപിക്കുക.",
+          "en": "Plant the banana suckers in the field."
+        }
+      },
+      {
+        "name": "First Fertilizer Dose",
+        "relativeDay": 30,
+        "windowDays": 7,
+        "notes": {
+          "ml": "ഒന്നാം വളപ്രയോഗം നൽകുക.",
+          "en": "Apply the first fertilizer dose."
+        }
+      },
+      {
+        "name": "Desuckering",
+        "relativeDay": 90,
+        "windowDays": 10,
+        "notes": {
+          "ml": "അസാധുവായ കുട്ടിത്തൈകൾ നീക്കം ചെയ്യുക.",
+          "en": "Remove unwanted suckers."
+        }
+      },
+      {
+        "name": "Bunch Emergence Care",
+        "relativeDay": 180,
+        "windowDays": 15,
+        "notes": {
+          "ml": "കായ ഗുദ്ധം പുറത്തുവരും. സസ്യം ശ്രദ്ധിക്കുക.",
+          "en": "Bunch emergence expected. Provide support and care."
+        }
+      },
+      {
+        "name": "Harvest",
+        "relativeDay": 300,
+        "windowDays": 15,
+        "notes": {
+          "ml": "വിളവെടുപ്പ് നടത്തുക. കായകൾ സൂക്ഷിക്കുക.",
+          "en": "Harvest the bunches. Handle carefully."
+        }
+      }
+    ]
+  }
+]

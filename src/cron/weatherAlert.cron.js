@@ -15,7 +15,7 @@ cron.schedule("*/1 * * * *", async () => {
 
     // 1. FETCH WEATHER
     // https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API key}
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=25.436298&lon=78.567352&appid=${WEATHER_API}&units=metric`;
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=9.931233&lon=76.267303&appid=${WEATHER_API}&units=metric`;
     const res = await axios.get(url);
     const weather = res.data.weather[0].main;
 
@@ -25,8 +25,8 @@ cron.schedule("*/1 * * * *", async () => {
         {body:  "മഴ പെയ്യാൻ സാധ്യത. ഇന്ന് സ്പ്രേ ഒഴിവാക്കുക." },
         phone
       );
+      console.log("Weather alerts sent.");
     }
   }
 
-  console.log("Weather alerts sent.");
 });

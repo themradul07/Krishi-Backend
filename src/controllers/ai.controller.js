@@ -11,10 +11,16 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
  */
 const generate = async (req, res) => {
   try {
+<<<<<<< HEAD
     const { farmerId, question } = req.body;
     if (!farmerId || !question) {
       return res.status(400).json({ message: 'Missing fields' });
     }
+=======
+    const farmerId = req.farmerId;1
+    const { question } = req.body;
+    if (!farmerId || !question) return res.status(400).json({ message: 'Missing fields' });
+>>>>>>> recovered-work-1
 
     const farmer = await Farmer.findById(farmerId);
     if (!farmer) {
@@ -51,7 +57,16 @@ Answer concisely in English.`;
         role: "user",
         parts: [
           {
+<<<<<<< HEAD
             text: basePrompt
+=======
+            // text: `You are Krishi Sakhi, a helpful Malayalam farming assistant.
+            text: `You are Krishi Sakhi, a helpful farming assistant.
+Farmer details: name=${farmer.name}, crop=${farmer.crop ?? "Paddy"}, soil=${farmer.soilType ?? "Clay"}, location=${farmer.location}.
+${activities.length ? 'Recent activities:\n' + activities.map(a => `${a.activity} at ${a.timestamp.toISOString()}`).join('\n') : ''}
+Question: ${question}
+Answer concisely in M`
+>>>>>>> recovered-work-1
           }
         ],
       }
