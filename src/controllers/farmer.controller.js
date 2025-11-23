@@ -1,14 +1,17 @@
 const Farmer = require('../models/Farmer');
 
+//  GET FARMER PROFILE
+
 const getFarmer = async (req, res) => {
   try {
-<<<<<<< HEAD
-    const farmer = await Farmer.findById(req.params.id).select('-password');
-=======
-    console.log("this is the " , req.farmerId);
+    //farmerId comes from auth middleware
+    console.log("Authenticated farmer:", req.farmerId);
+
     const farmer = await Farmer.findById(req.farmerId).select('-password');
->>>>>>> 373506706092d837eface72795e891d054b53edd
-    if (!farmer) return res.status(404).json({ message: 'Farmer not found' });
+    if (!farmer) {
+      return res.status(404).json({ message: 'Farmer not found' });
+    }
+
     res.json(farmer);
   } catch (err) {
     console.error(err);
@@ -16,14 +19,23 @@ const getFarmer = async (req, res) => {
   }
 };
 
+//  UPDATE FARMER PROFILE
+
 const updateFarmer = async (req, res) => {
   try {
     const updates = req.body;
-<<<<<<< HEAD
-=======
-    console.log(updates);
->>>>>>> 373506706092d837eface72795e891d054b53edd
-    const farmer = await Farmer.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
+    console.log("Incoming update:", updates);
+
+    const farmer = await Farmer.findByIdAndUpdate(
+      req.params.id,
+      updates,
+      { new: true }
+    ).select('-password');
+
+    if (!farmer) {
+      return res.status(404).json({ message: "Farmer not found" });
+    }
+
     res.json(farmer);
   } catch (err) {
     console.error(err);
