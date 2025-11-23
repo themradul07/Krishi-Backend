@@ -1,34 +1,41 @@
-const Farmer = require('../models/Farmer');
-const FarmerPlot = require("../models/FarmerPlot");
+// const cropData = require("../data/crop_calender.json"); // update path
+
+// function generateCropCalendar(cropName, startDate) {
+//   if (!cropData[cropName]) {
+//     throw new Error("Crop not found in knowledge base");
+//   }
+
+//   const stages = cropData[cropName].stages;
+//   let currentDate = new Date(startDate);
+
+//   const calendar = stages.map(stage => {
+//     const start = new Date(currentDate);
+//     currentDate.setDate(currentDate.getDate() + stage.duration_days);
+//     const end = new Date(currentDate);
+
+//     return {
+//       stage: stage.name,
+//       startDate: start.toISOString().split("T")[0],
+//       endDate: end.toISOString().split("T")[0],
+//       duration: stage.duration_days,
+//       advice: stage.advice
+//     };
+//   });
+
+//   return {
+//     crop: cropName,
+//     startingFrom: startDate,
+//     calendar
+//   };
+// }
+
+// module.exports = { generateCropCalendar };
+
+
 const CropEvent = require("../models/CropEvent");
-const { generateCropCalendar } = require("../utils/generateCalender");
 const cropTemplates = require("../data/cropCalender");
 
-const getFarmer = async (req, res) => {
-  try {
-    console.log("this is the ", req.farmerId);
-    const farmer = await Farmer.findById(req.farmerId).select('-password');
-    if (!farmer) return res.status(404).json({ message: 'Farmer not found' });
-    res.json(farmer);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-const updateFarmer = async (req, res) => {
-  try {
-    const updates = req.body;
-    console.log(updates);
-    const farmer = await Farmer.findByIdAndUpdate(req.farmerId, updates, { new: true }).select('-password');
-    res.json({farmer , ok: true});
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-const addCropToFarmer = async (req, res) => {
+exports.addCrop = async (req, res) => {
   try {
     const { farmerId, cropName, variety, sowingDate } = req.body;
 
@@ -80,5 +87,3 @@ const addCropToFarmer = async (req, res) => {
     res.status(500).json({ error: "Something went wrong" });
   }
 };
-
-module.exports = { getFarmer, updateFarmer, addCropToFarmer };

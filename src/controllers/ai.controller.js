@@ -45,7 +45,8 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const generate = async (req, res) => {
   try {
-    const { farmerId, question } = req.body;
+    const farmerId = req.farmerId;1
+    const { question } = req.body;
     if (!farmerId || !question) return res.status(400).json({ message: 'Missing fields' });
 
     const farmer = await Farmer.findById(farmerId);
@@ -65,7 +66,7 @@ const generate = async (req, res) => {
 Farmer details: name=${farmer.name}, crop=${farmer.crop ?? "Paddy"}, soil=${farmer.soilType ?? "Clay"}, location=${farmer.location}.
 ${activities.length ? 'Recent activities:\n' + activities.map(a => `${a.activity} at ${a.timestamp.toISOString()}`).join('\n') : ''}
 Question: ${question}
-Answer concisely in English.`
+Answer concisely in M`
           }
         ],
       }
