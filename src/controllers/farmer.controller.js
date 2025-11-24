@@ -8,13 +8,8 @@ const cropTemplates = require("../data/cropCalender");
 
 const getFarmer = async (req, res) => {
   try {
-<<<<<<< HEAD
     //farmerId comes from auth middleware
-    console.log("Authenticated farmer:", req.farmerId);
-
-=======
     console.log("this is the ", req.farmerId);
->>>>>>> recovered-work-1
     const farmer = await Farmer.findById(req.farmerId).select('-password');
     if (!farmer) {
       return res.status(404).json({ message: 'Farmer not found' });
@@ -32,7 +27,6 @@ const getFarmer = async (req, res) => {
 const updateFarmer = async (req, res) => {
   try {
     const updates = req.body;
-<<<<<<< HEAD
     console.log("Incoming update:", updates);
 
     const farmer = await Farmer.findByIdAndUpdate(
@@ -46,11 +40,6 @@ const updateFarmer = async (req, res) => {
     }
 
     res.json(farmer);
-=======
-    console.log(updates);
-    const farmer = await Farmer.findByIdAndUpdate(req.farmerId, updates, { new: true }).select('-password');
-    res.json({farmer , ok: true});
->>>>>>> recovered-work-1
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });

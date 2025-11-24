@@ -73,9 +73,9 @@ const login = async (req, res) => {
     );
 
     // --- WhatsApp ALERT ---
-    const whatsappMsg = `Dear ${farmer.name}, you have successfully logged in to Krishi Sakhi.`;
-    const phone = "+919140395305"; // you can change dynamically later
-    await sendWhatsApp(whatsappMsg, phone);
+    // const whatsappMsg = `Dear ${farmer.name}, you have successfully logged in to Krishi Sakhi.`;
+    // const phone = "+919140395305"; // you can change dynamically later
+    // await sendWhatsApp(whatsappMsg, phone);
 
     return res.json({
       success: true,
