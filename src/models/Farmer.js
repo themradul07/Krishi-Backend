@@ -4,15 +4,17 @@ const mongoose = require("mongoose");
 
 const farmerSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  phone: { type: String, default: '' },
+  email: { type: String , unique: true },
+  password: { type: String },
+  phone: { type: String, unique: true },
+  otp: String,
+  otpExpires: Date,
   soilType: { type: String, default: '' },
   location: { type: String, default: '' },
   language: { type: String, default: "ml-IN" },
-  irrigation : {type: String,  default: ""},
-  primaryCrop: {type: String, default : " "},
-  landSize: {type: String , default: ""},
+  irrigation: { type: String, default: "" },
+  primaryCrop: { type: String, default: " " },
+  landSize: { type: String, default: "" },
   plot: { type: mongoose.Schema.Types.ObjectId, ref: "FarmerPlot" }
 });
 
