@@ -18,7 +18,7 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'Missing fields' });
     }
 
-    // Check if email already exists
+    // Check if phone already exists
     const existing = await Farmer.findOne({ phone });
     if (existing) {
       return res.status(400).json({ message: 'Phone already registered' });
@@ -67,13 +67,13 @@ const register = async (req, res) => {
 // LOGIN
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { phone, password } = req.body;
 
-    if (!email || !password) {
+    if (!phone || !password) {
       return res.status(400).json({ message: 'Missing fields' });
     }
 
-    const farmer = await Farmer.findOne({ email });
+    const farmer = await Farmer.findOne({ phone });
     if (!farmer) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -147,11 +147,10 @@ const verifyOtp = async (req, res) => {
 
     // Create JWT
     const token = jwt.sign(
-      { userId: farmer._id, phone: farmer.phone },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { id: farmer._id },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '7d' }
     );
-
     return res.json({ success: true, token });
   } catch (e) {
     return res.status(500).json({ message: e.message });
@@ -170,16 +169,22 @@ const googleLogin = async (req, res) => {
 
     const payload = ticket.getPayload();
     const googleId = payload.sub;
-    const email = payload.email;
+    const phone = payload.phone;
     const name = payload.name;
+    const email = payload.email;
+    console.log("Google Login Payload:", payload);
 
-    // find user by googleId OR email OR firebaseUid
-    let farmer = await Farmer.findOne({ $or: [{ googleId }, { email }] });
+    // find user by googleId OR phone OR firebaseUid
+    let farmer = await Farmer.findOne( { email });
+    if (!email) {
+      throw new Error("Email is required for user creation.");
+    }
+
 
     if (!farmer) {
       farmer = await Farmer.create({ name, email });
     } else {
-      // ensure googleId/email stored
+      // ensure googleId/phone stored
       farmer.email = farmer.email || email;
       farmer.name = farmer.name || name;
       await farmer.save();
