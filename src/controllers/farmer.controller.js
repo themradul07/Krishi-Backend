@@ -30,7 +30,7 @@ const updateFarmer = async (req, res) => {
     console.log("Incoming update:", updates);
 
     const farmer = await Farmer.findByIdAndUpdate(
-      req.params.id,
+      req.farmerId,
       updates,
       { new: true }
     ).select('-password');

@@ -10,6 +10,7 @@ const auth = (req, res, next) => {
     req.farmerId = decoded.id;
     next();
   } catch (err) {
+    console.error("JWT Error:", err);
     res.status(401).json({ message: 'Token is not valid' });
   } 
 };

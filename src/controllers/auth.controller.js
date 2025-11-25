@@ -44,7 +44,7 @@ const register = async (req, res) => {
     // Send OTP via WhatsApp (or SMS etc.)
     await sendWhatsApp(phone, `Your OTP is ${otp}`);
 
-    // Generate JWT for user
+    // Create JWT
     const token = jwt.sign(
       { id: farmer._id },
       process.env.JWT_SECRET || 'secret',
@@ -68,7 +68,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     if (!email || !password) {
       return res.status(400).json({ message: 'Missing fields' });
     }
@@ -184,7 +184,11 @@ const googleLogin = async (req, res) => {
       farmer.name = farmer.name || name;
       await farmer.save();
     }
-    const token = sign({ id: farmer._id });
+    const token = jwt.sign(
+      { id: farmer._id },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '7d' }
+    );
     res.json({ success: true, token, farmer });
   } catch (err) {
     console.error("googleLogin err:", err);
