@@ -6,11 +6,11 @@ const activityRoutes = require('./routes/activity.routes');
 const chatRoutes = require('./routes/chat.routes');
 const aiRoutes = require('./routes/ai.routes');
 const weatherRoutes = require('./routes/weather.routes');
-const knowledgeRoutes = require("./routes/knowledge.routes");
-
+const schemeRoutes = require('./routes/scheme.routes');
 const bodyParser = require('body-parser');
 const weatheralert = require('./cron/weatherAlert.cron');
-const cropAlert = require('./cron/cropAlert.cron')
+const cropAlert = require('./cron/cropAlert.cron');
+const marketroutes = require('./routes/marketPrice.routes');
 
 const app = express();
 
@@ -25,6 +25,12 @@ app.use('/api/activity', activityRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/advisory', aiRoutes);
 app.use('/api/weather', weatherRoutes);
+app.use('/api/market', marketroutes);
+app.use('/api/scheme', schemeRoutes);
+
+// CRON JOBS
+// weatheralert.start();
+// cropAlert.start();
 
 
 // DEFAULT ROUTE

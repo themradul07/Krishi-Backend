@@ -42,7 +42,7 @@ const register = async (req, res) => {
     });
 
     // Send OTP via WhatsApp (or SMS etc.)
-    await sendWhatsApp(phone, `Your OTP is ${otp}`);
+    // await sendWhatsApp(phone, `Your OTP is ${otp}`);
 
     // Create JWT
     const token = jwt.sign(

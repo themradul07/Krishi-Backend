@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 
 const farmerSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: { type: String , unique: true },
+  email: { type: String },
   password: { type: String },
   phone: String,
   otp: String,
