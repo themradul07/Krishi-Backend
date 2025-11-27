@@ -11,6 +11,7 @@ const bodyParser = require('body-parser');
 const weatheralert = require('./cron/weatherAlert.cron');
 const cropAlert = require('./cron/cropAlert.cron');
 const marketroutes = require('./routes/marketPrice.routes');
+const { generateMusic } = require('./services/music.service');
 
 const app = express();
 
@@ -35,5 +36,8 @@ app.use('/api/scheme', schemeRoutes);
 
 // DEFAULT ROUTE
 app.get('/', (req, res) => res.send('Krishi Sakhi Backend is running'));
+const fs = require("fs");
+
+
 
 module.exports = app;

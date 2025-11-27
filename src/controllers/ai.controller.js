@@ -1,10 +1,20 @@
-const { GoogleGenAI } = require("@google/genai");
+const {
+  GoogleGenAI,
+  createUserContent,
+  createPartFromUri,
+} =  require("@google/genai");
 const Chat = require('../models/Chat');
 const Farmer = require('../models/Farmer');
 const Activity = require('../models/Activity');
 const { getWeather } = require("../services/weather.service");
 
+
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+
 
 const generate = async (req, res) => {
   try {
@@ -378,4 +388,86 @@ return an array with 3-5 advices of one liner in english. Answer in JSON format 
   }
 }
 
-module.exports = { generate, detectCropDisease, generateAdvisory, detectPest };
+// const transcribeAudio = async (req, res) => {
+//   try {
+//     if (!req.file) {
+//       return res.status(400).json({ error: "No audio file uploaded" });
+//     }
+
+//     // Upload the uploaded audio buffer directly
+//     const myfile = await ai.files.upload({
+//       file: req.file.buffer,
+//       size: req.file.buffer.length,    // add size in bytes explicitly
+//       config: { mimeType: req.file.mimetype },
+//     });
+
+
+//     // Call the AI model to generate transcript
+//     const result = await ai.models.generateContent({
+//       model: "gemini-1.5-flash",
+//       contents: createUserContent([
+//         createPartFromUri(myfile.uri, myfile.mimeType),
+//         "Generate a transcript of the speech.",
+//       ]),
+//     });
+
+//     // Extract text from result object assuming it's in result.text
+//     console.log("Transcription result:", result.text);
+//     return res.json({ text: result.text });
+//   } catch (err) {
+//     console.error("STT ERROR:", err);
+//     return res.status(500).json({ error: "Transcription failed" });
+//   }
+// };
+
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+
+// const { GoogleGenAI, createUserContent, createPartFromUri } = require("@google/genai");
+
+const transcribeAudio = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No audio provided" });
+
+    // TEMP FILE — exists only for milliseconds
+    const tempPath = path.join(os.tmpdir(), `${Date.now()}-${req.file.originalname}`);
+    fs.writeFileSync(tempPath, req.file.buffer);
+
+    // Upload to Gemini
+    const uploaded = await genAI.files.upload({
+      file: tempPath,
+      config: { mimeType: req.file.mimetype },
+    });
+
+    // Delete temp file immediately
+    fs.unlinkSync(tempPath);
+
+    // Ask Gemini to transcribe
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: createUserContent([
+        createPartFromUri(uploaded.uri, uploaded.mimeType),
+        "Please generate an accurate transcription of the audio.",
+      ]),
+    });
+
+    return res.json({
+      text: result.text,
+    });
+
+  } catch (error) {
+    console.error("STT ERROR:", error);
+    return res.status(500).json({ error: "Transcription failed" });
+  }
+};
+
+
+
+
+
+
+
+
+
+module.exports = { generate, detectCropDisease, generateAdvisory, detectPest, transcribeAudio };

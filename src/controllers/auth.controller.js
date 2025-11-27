@@ -2,7 +2,6 @@ const Farmer = require('../models/Farmer');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendWhatsApp } = require("../services/whatsapp.service");
-const { sign } = require('../services/jwt.service');
 const { OAuth2Client } = require("google-auth-library");
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -26,7 +25,7 @@ const register = async (req, res) => {
 
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpires = Date.now() + 5 * 60 * 1000;
+    
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
@@ -38,11 +37,11 @@ const register = async (req, res) => {
       password: hashed,
       phone,
       otp,
-      otpExpires
+      
     });
 
     // Send OTP via WhatsApp (or SMS etc.)
-    // await sendWhatsApp(phone, `Your OTP is ${otp}`);
+    await sendWhatsApp(phone, `Your OTP is ${otp}`);
 
     // Create JWT
     const token = jwt.sign(
@@ -53,9 +52,7 @@ const register = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Registered successfully! OTP sent.',
-      token,
-      farmerId: farmer._id
+      message: 'Registered successfully! OTP sent.',      
     });
 
   } catch (err) {
@@ -90,9 +87,9 @@ const login = async (req, res) => {
     );
 
     // --- WhatsApp ALERT ---
-    // const whatsappMsg = `Dear ${farmer.name}, you have successfully logged in to Krishi Sakhi.`;
-    // const phone = "+919140395305"; // you can change dynamically later
-    // await sendWhatsApp(whatsappMsg, phone);
+    const whatsappMsg = `Dear ${farmer.name}, you have successfully logged in to Krishi Sakhi.`;
+
+    await sendWhatsApp(whatsappMsg, phone);
 
     return res.json({
       success: true,
@@ -107,20 +104,20 @@ const login = async (req, res) => {
   }
 };
 
-const sendOtp = async (req, res) => {
+const resendOtp = async (req, res) => {
   try {
     const { phone } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000);
-    const otpExpires = Date.now() + 5 * 60 * 1000;
+  
 
     let farmer = await Farmer.findOne({ phone });
     if (!farmer) farmer = await Farmer.create({ phone });
 
     farmer.otp = otp;
-    farmer.otpExpires = otpExpires;
+   
     await farmer.save();
     await sendWhatsApp(phone, `Your OTP is ${otp}`);
-    return res.json({ success: true, message: "OTP sent" });
+    return res.json({ success: true, message: "OTP resend successfully" });
   } catch (e) {
     console.log(e);
     return res.status(500).json({ success: false, message: e.message });
@@ -137,12 +134,9 @@ const verifyOtp = async (req, res) => {
     if (farmer.otp !== otp)
       return res.status(400).json({ message: "Invalid OTP" });
 
-    if (farmer.otpExpires < Date.now())
-      return res.status(400).json({ message: "OTP expired" });
-
     // Clear OTP
     farmer.otp = null;
-    farmer.otpExpires = null;
+   
     await farmer.save();
 
     // Create JWT
@@ -201,4 +195,4 @@ const googleLogin = async (req, res) => {
   }
 };
 
-module.exports = { register, login, sendOtp, verifyOtp, googleLogin };
+module.exports = { register, login, resendOtp, verifyOtp, googleLogin };
