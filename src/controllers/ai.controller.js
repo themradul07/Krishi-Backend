@@ -2,11 +2,14 @@ const {
   GoogleGenAI,
   createUserContent,
   createPartFromUri,
-} =  require("@google/genai");
+} = require("@google/genai");
 const Chat = require('../models/Chat');
 const Farmer = require('../models/Farmer');
 const Activity = require('../models/Activity');
 const { getWeather } = require("../services/weather.service");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
 
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -386,45 +389,7 @@ return an array with 3-5 advices of one liner in english. Answer in JSON format 
     console.error(err.response?.data || err.message);
     res.status(500).json({ message: 'Server error' });
   }
-}
-
-// const transcribeAudio = async (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({ error: "No audio file uploaded" });
-//     }
-
-//     // Upload the uploaded audio buffer directly
-//     const myfile = await ai.files.upload({
-//       file: req.file.buffer,
-//       size: req.file.buffer.length,    // add size in bytes explicitly
-//       config: { mimeType: req.file.mimetype },
-//     });
-
-
-//     // Call the AI model to generate transcript
-//     const result = await ai.models.generateContent({
-//       model: "gemini-1.5-flash",
-//       contents: createUserContent([
-//         createPartFromUri(myfile.uri, myfile.mimeType),
-//         "Generate a transcript of the speech.",
-//       ]),
-//     });
-
-//     // Extract text from result object assuming it's in result.text
-//     console.log("Transcription result:", result.text);
-//     return res.json({ text: result.text });
-//   } catch (err) {
-//     console.error("STT ERROR:", err);
-//     return res.status(500).json({ error: "Transcription failed" });
-//   }
-// };
-
-const fs = require("fs");
-const path = require("path");
-const os = require("os");
-
-// const { GoogleGenAI, createUserContent, createPartFromUri } = require("@google/genai");
+};
 
 const transcribeAudio = async (req, res) => {
   try {
@@ -456,9 +421,120 @@ const transcribeAudio = async (req, res) => {
       text: result.text,
     });
 
-  } catch (error) {
+  }
+  catch (error) {
     console.error("STT ERROR:", error);
     return res.status(500).json({ error: "Transcription failed" });
+  }
+};
+
+const generateSuggestion = async (req, res) => {
+  try {
+    const farmerId = req.farmerId;
+    if (!farmerId) return res.status(400).json({ message: 'Missing fields' });
+
+    const farmer = await Farmer.findById(farmerId);
+    if (!farmer) {
+      return res.status(404).json({ message: 'Farmer not found' });
+    }
+
+    const activities = await Activity.find({ farmerId })
+      .sort({ timestamp: -1 })
+      .limit(20);
+
+    const weather = await getWeather("Jhansi");
+    const basePrompt = `You are an agricultural assistant AI. Generate personalized farming suggestions based on the user's top activity types and recent notes.
+
+Inputs:
+- Recent Activities: ${activities}
+- Crop context (if available): ${farmer.primaryCrop}
+- Location context (if available): ${farmer.location}
+- Current weather: ${weather}
+
+Your tasks:
+1. Based on top repeated activities (ex: fertilization happening frequently), generate 4–6 actionable recommendations.
+2. Each suggestion should mention:
+   - What to do
+   - Why it matters (short reason)
+   - Timing guidance (now / next 2–3 days / before next rain)
+3. If recent notes show patterns (ex: pest spike, repeated irrigation, consecutive fertilizer use), flag *possible anomalies* and recommend a check or precaution.
+4. Suggest “future-focused” actions:
+   - What should be planned for next week or next stage of crop
+   - Any inspections, soil tests, or preparation steps
+   - Risk indicators based on recent patterns
+5. Keep tone simple, practical, farmer-friendly.
+6. Avoid giving chemical doses unless explicitly provided by user; otherwise say “follow recommended local dose”.
+
+Output Format  (strict JSON, no extra text):
+Provide output as a clean JSON array like: 
+[
+  {
+    "title": "",
+    "description": "",
+    "timing": "",
+    "reason": ""
+  }
+]
+
+
+`;
+
+
+    // Create Gemini chat session
+    const suggestions = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: basePrompt,
+      config: {
+        systemInstruction: "You are a Kisihi Sakhi Advisory System",
+      },
+    });
+
+    console.log("Suggestions response:", suggestions);
+
+
+    // const answer = await chat.sendMessage({ message: question });
+
+    // // Extract the first candidate’s content string
+    // const responseText = answer.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    // if (!responseText) {
+    //   return res.status(500).json({ message: "No response from AI" });
+    // }
+
+    // // Clean response from markdown backticks if any
+    // const cleanResponse = responseText.replace('```json', '').replace(/```/g, '').trim();
+
+    // let parsedResponse;
+    // try {
+    //   parsedResponse = JSON.parse(cleanResponse);
+    // } catch (parseError) {
+    //   return res.status(500).json({
+    //     error: "Failed to parse AI JSON",
+    //     rawResponse: cleanResponse
+    //   });
+    // }
+
+    // // Save the chat with question and the answer string (stringify the JSON)
+    // await Chat.create({
+    //   farmerId,
+    //   question,
+    //   answer: JSON.stringify(parsedResponse)
+    // });
+
+    // // Send parsed JSON response to client
+    let text = suggestions.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    // Remove code block wrappers
+    text = text.replace(/```json|```/g, '').trim();
+
+    const data = JSON.parse(text);
+    console.log(data);
+
+    res.json({"suggestions": data});
+
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -470,4 +546,7 @@ const transcribeAudio = async (req, res) => {
 
 
 
-module.exports = { generate, detectCropDisease, generateAdvisory, detectPest, transcribeAudio };
+
+
+
+module.exports = { generate, detectCropDisease, generateAdvisory, detectPest, transcribeAudio, generateSuggestion };
