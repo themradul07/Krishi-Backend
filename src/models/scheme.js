@@ -1,25 +1,22 @@
-const mongoose = require("mongoose");
+const mongoose =require("mongoose");
 
 const schemeSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
+  name: String,
+  description: String,
+  department: String,
+  benefits: String,
+  eligibility: {
+    state: String,
+    district: [String],
+    minLand: Number,
+    maxLand: Number,
+    crops: [String],
+    irrigationRequired: Boolean,
+    incomeLimit: Number,
   },
-  crops: {
-    type: [String], // array of crops
-    required: true,
-  },
-  deadline: {
-    type: Date,
-    required: true,
-  },
-  description: {
-    type: String,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  }
+  documents: [String],
+  deadline: Date,
+  link: String
 });
 
 module.exports = mongoose.model("Scheme", schemeSchema);

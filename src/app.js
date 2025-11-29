@@ -12,6 +12,9 @@ const weatheralert = require('./cron/weatherAlert.cron');
 const cropAlert = require('./cron/cropAlert.cron');
 const marketroutes = require('./routes/marketPrice.routes');
 const { generateMusic } = require('./services/music.service');
+const buyerSellerRoutes = require('./routes/contract.routes');
+
+
 
 const app = express();
 
@@ -27,7 +30,9 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/advisory', aiRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/market', marketroutes);
-app.use('/api/scheme', schemeRoutes);
+app.use('/api/schemes', schemeRoutes);
+app.use('/api/requirements', buyerSellerRoutes );
+
 
 // CRON JOBS
 // weatheralert.start();

@@ -1,16 +1,16 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
-const BuyerSellerRequirementSchema = new mongoose.Schema(
+const ContractSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["buy", "sell"],  // NEW FIELD
+      enum: ["buy", "sell"],
       required: true,
     },
 
     postingDate: {
-      type: String, // Example: "28 November 25"
-      required: true,
+      type: String,
+      default: new Date().toISOString(),
     },
 
     title: {
@@ -19,9 +19,13 @@ const BuyerSellerRequirementSchema = new mongoose.Schema(
       trim: true,
     },
 
+    note:{
+      type: String
+    },
+
     price: {
       amount: { type: Number, required: true },
-      unit: { type: String, required: true }, // Kg, Quintal, Ton etc.
+      unit: { type: String, required: true },
     },
 
     quantity: {
@@ -36,28 +40,16 @@ const BuyerSellerRequirementSchema = new mongoose.Schema(
       buyingFrequency: { type: String, default: "once" },
     },
 
-    buyer: {
+    contractorInfo: {
       name: { type: String },
       state: { type: String },
       image: { type: String },
       phone: { type: String },
     },
 
-    seller: {
-      name: { type: String },
-      state: { type: String },
-      image: { type: String },
-      phone: { type: String },
-    },
-
-    images: [
-      {
-        type: String, // URLs of product images
-      },
-    ],
+    images: [{ type: [String] }],
   },
   { timestamps: true }
 );
-
-export default mongoose.models.BuyerSellerRequirement ||
-  mongoose.model("BuyerSellerRequirement", BuyerSellerRequirementSchema);
+module.exports = mongoose.model("Contract", ContractSchema);
+  
