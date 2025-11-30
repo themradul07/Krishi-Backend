@@ -4,7 +4,7 @@ const router = express.Router();
 const { generate, detectCropDisease, generateAdvisory, detectPest, transcribeAudio, generateSuggestion } = require('../controllers/ai.controller');
 const multer = require('multer');
 const auth = require('../middleware/auth');
-const { upload } = require('../config/MULTER.JS');
+const { upload } = require('../config/multer.JS');
 
 
 router.post('/generate', auth , generate);

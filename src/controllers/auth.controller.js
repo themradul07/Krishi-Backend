@@ -212,8 +212,6 @@ const googleLogin = async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const googleId = payload.sub;
-    const phone = payload.phone;
     const name = payload.name;
     const email = payload.email;
     console.log("Google Login Payload:", payload);
@@ -227,12 +225,7 @@ const googleLogin = async (req, res) => {
 
     if (!farmer) {
       farmer = await Farmer.create({ name, email });
-    } else {
-      // ensure googleId/phone stored
-      farmer.email = farmer.email || email;
-      farmer.name = farmer.name || name;
-      await farmer.save();
-    }
+    } 
     const token = jwt.sign(
       { id: farmer._id },
       process.env.JWT_SECRET || 'secret',
