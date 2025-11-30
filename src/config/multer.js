@@ -1,5 +1,7 @@
-import multer from "multer";
+const multer = require("multer");
 
 // const storage = multer.memoryStorage(); // <-- audio never saved to disk
 
-export const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ storage: multer.memoryStorage() });
+
+module.exports = upload;
