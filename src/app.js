@@ -9,6 +9,7 @@ const weatherRoutes = require('./routes/weather.routes');
 const schemeRoutes = require('./routes/scheme.routes');
 const bodyParser = require('body-parser');
 const weatheralert = require('./cron/weatherAlert.cron');
+const schemeAlert = require('./cron/schemesAlert.cron');
 const cropAlert = require('./cron/cropAlert.cron');
 const marketroutes = require('./routes/marketPrice.routes');
 const { generateMusic } = require('./services/music.service');
