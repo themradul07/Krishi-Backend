@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { sendWhatsApp } = require("../services/whatsapp.service");
 const { OAuth2Client } = require("google-auth-library");
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const Admin = require("../models/Admin");
 
 
 
@@ -64,45 +65,94 @@ const register = async (req, res) => {
 // LOGIN
 const login = async (req, res) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, password, isAdmin } = req.body;
 
     if (!phone || !password) {
-      return res.status(400).json({ message: 'Missing fields' });
+      return res.status(400).json({ success: false, message: "Missing fields" });
     }
 
-    const farmer = await Farmer.findOne({ phone });
-    if (!farmer) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+    let user;
+
+    // ----------------------------
+    // 🔐 ADMIN LOGIN
+    // ----------------------------
+    if (isAdmin) {
+      user = await Admin.findOne({ phone });
+
+      if (!user) {
+        return res.status(400).json({ success: false, message: "Admin not found" });
+      }
+
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+        return res.status(400).json({ success: false, message: "Invalid admin credentials" });
+      }
+
+      const token = jwt.sign(
+        { id: user._id, role: "admin" },
+        process.env.JWT_SECRET || "secret",
+        { expiresIn: "7d" }
+      );
+
+      // WhatsApp login alert
+      try {
+        await sendWhatsApp(phone, `Admin Login Alert: Hello ${user.name}, you have logged in successfully.`);
+      } catch (err) {
+        console.log("WhatsApp send error:", err.message);
+      }
+
+      return res.json({
+        success: true,
+        message: "Admin logged in successfully",
+        token,
+        adminId: user._id,
+        role: "admin"
+      });
     }
 
-    const match = await bcrypt.compare(password, farmer.password);
+    // ----------------------------
+    // 👨‍🌾 FARMER LOGIN
+    // ----------------------------
+    user = await Farmer.findOne({ phone });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
     }
 
     const token = jwt.sign(
-      { id: farmer._id },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '7d' }
+      { id: user._id, role: "farmer" },
+      process.env.JWT_SECRET || "secret",
+      { expiresIn: "7d" }
     );
 
-    // --- WhatsApp ALERT ---
-    const whatsappMsg = `Dear ${farmer.name}, you have successfully logged in to Krishi Sakhi.`;
-
-    await sendWhatsApp(whatsappMsg, phone);
+    // WhatsApp login alert
+    try {
+      await sendWhatsApp(phone, `Dear ${user.name}, you have successfully logged in to Krishi Sakhi.`);
+    } catch (err) {
+      console.log("WhatsApp send error:", err.message);
+    }
 
     return res.json({
       success: true,
-      message: 'Logged in successfully!',
+      message: "Logged in successfully!",
       token,
-      farmerId: farmer._id
+      farmerId: user._id,
+      role: "farmer"
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Login error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+module.exports = { login };
+
 
 const resendOtp = async (req, res) => {
   try {
@@ -162,8 +212,6 @@ const googleLogin = async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const googleId = payload.sub;
-    const phone = payload.phone;
     const name = payload.name;
     const email = payload.email;
     console.log("Google Login Payload:", payload);
@@ -177,12 +225,7 @@ const googleLogin = async (req, res) => {
 
     if (!farmer) {
       farmer = await Farmer.create({ name, email });
-    } else {
-      // ensure googleId/phone stored
-      farmer.email = farmer.email || email;
-      farmer.name = farmer.name || name;
-      await farmer.save();
-    }
+    } 
     const token = jwt.sign(
       { id: farmer._id },
       process.env.JWT_SECRET || 'secret',

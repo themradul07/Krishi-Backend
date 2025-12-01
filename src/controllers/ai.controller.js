@@ -10,6 +10,12 @@ const { getWeather } = require("../services/weather.service");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
+const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
+
+// Initialize ElevenLabs client once at the module level, not in handler
+const elevenlabs = new ElevenLabsClient({
+   apiKey: process.env.ELEVEN_LABS_API_KEY, 
+});
 
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -130,9 +136,41 @@ Return ONLY the JSON object.
       question,
       answer: JSON.stringify(parsedResponse)
     });
+    const answerText = parsedResponse.answer + (parsedResponse.steps && parsedResponse.steps.length > 0
+      ? " Steps: " + parsedResponse.steps.join(" ")
+      : "");
 
-    // Send parsed JSON response to client
-    res.json(parsedResponse);
+    // Generate speech audio from answer text using ElevenLabs
+    const audio = await elevenlabs.textToSpeech.convert('JBFqnCBsd6RMkjVDRZzb', {
+      text: answerText,
+      modelId: 'eleven_multilingual_v2', // supports multiple languages incl. Malayalam
+      outputFormat: 'mp3_44100_128',
+    });
+
+    // Read the audio as a buffer
+    const reader = audio.getReader();
+    const chunks = [];
+    let doneReading = false;
+    while (!doneReading) {
+      const { done, value } = await reader.read();
+      if (done) {
+        doneReading = true;
+      } else {
+        chunks.push(value);
+      }
+    }
+    // Concatenate buffer chunks into a single buffer
+    const audioBuffer = Buffer.concat(chunks);
+
+    // Encode audio buffer to base64 string to send via JSON response
+    const audioBase64 = audioBuffer.toString('base64');
+
+    // Send JSON response including audio base64 data
+    res.json({
+      ...parsedResponse,
+      audioBase64, // frontend can play this as a data URL: "data:audio/mp3;base64," + audioBase64
+    });
+
 
   } catch (err) {
     console.error(err.response?.data || err.message);
@@ -140,7 +178,7 @@ Return ONLY the JSON object.
   }
 };
 
-const detectPest = async (req, res) => {
+const detectCropDisease= async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file uploaded' });
@@ -202,7 +240,7 @@ Return only valid JSON.`
   }
 };
 
-const detectCropDisease = async (req, res) => {
+const detectPest  = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file uploaded' });
@@ -530,7 +568,7 @@ Provide output as a clean JSON array like:
     const data = JSON.parse(text);
     console.log(data);
 
-    res.json({"suggestions": data});
+    res.json({ "suggestions": data });
 
   } catch (err) {
     console.error(err.response?.data || err.message);
