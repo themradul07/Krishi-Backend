@@ -48,6 +48,7 @@ const ContractSchema = new mongoose.Schema(
     },
 
     images: [{ type: [String] }],
+    farmerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farmer', required: true },
   },
   { timestamps: true }
 );

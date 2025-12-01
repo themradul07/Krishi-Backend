@@ -3,8 +3,9 @@ const Contract = require("../models/Contract");
 // ===================== CREATE =====================
 const createRequirement = async (req, res) => {
   try {
+    const farmerId = req.farmerId;
     console.log(req.body);
-    const requirement = await Contract.create(req.body);
+    const requirement = await Contract.create({...req.body, farmerId});
 
     res.status(201).json({
       success: true,
@@ -20,6 +21,7 @@ const createRequirement = async (req, res) => {
 const getRequirements = async (req, res) => {
   try {
     const {
+      isProfile,            
       type,
       product,
       variety,
@@ -36,6 +38,7 @@ const getRequirements = async (req, res) => {
     let filter = {};
 
     // --- BASIC FILTERS ---
+    if(isProfile) filter.farmerId = req.farmerId;
     if (type) filter.type = type;
 
     if (product) filter["product.name"] = { $regex: product, $options: "i" };

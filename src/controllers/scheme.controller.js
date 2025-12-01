@@ -115,6 +115,8 @@ const updateScheme = async (req, res) => {
 
 // DELETE Scheme
 const deleteScheme = async (req, res) => {
+  console.log("Delete scheme called");
+  console.log("Delete scheme called with id:", req.params.id);
   try {
     const scheme = await Scheme.findByIdAndDelete(req.params.id);
 

@@ -6,14 +6,15 @@ const {
   updateRequirement,
   deleteRequirement,
 } = require("../controllers/contract.controller");
+const auth = require("../middleware/auth");
 
 const router = express.Router();
 
 
-router.post("/", createRequirement);
-router.get("/", getRequirements);
-router.get("/:id", getRequirementById);
-router.put("/:id", updateRequirement);
-router.delete("/:id", deleteRequirement);
+router.post("/", auth ,createRequirement);
+router.get("/",auth, getRequirements);
+router.get("/:id", auth, getRequirementById);
+router.put("/:id", auth, updateRequirement);
+router.delete("/:id", auth , deleteRequirement);
 
 module.exports = router;

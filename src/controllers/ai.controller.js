@@ -199,6 +199,8 @@ const detectCropDisease= async (req, res) => {
       {
         text: `Analyze the crop image and return result ONLY in pure JSON (no text, no backticks):
 
+      
+
 {
   "disease": "Disease Name",
   "confidence": 80,
@@ -206,7 +208,7 @@ const detectCropDisease= async (req, res) => {
   "treatment": ["Step 1", "Step 2"],
   "prevention": ["Tip 1", "Tip 2"]
 }
-
+  if the image is not related to crop and plants then simply return in the disease name that no disease is detected and all the remaining fields blank.
 Return only valid JSON.`
       }
     ];
