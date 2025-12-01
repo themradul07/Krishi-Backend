@@ -14,6 +14,8 @@ const cropAlert = require('./cron/cropAlert.cron');
 const marketroutes = require('./routes/marketPrice.routes');
 const { generateMusic } = require('./services/music.service');
 const buyerSellerRoutes = require('./routes/contract.routes');
+const agriServiceRoutes = require('./routes/agriService.routes');
+
 
 
 
@@ -33,6 +35,8 @@ app.use('/api/weather', weatherRoutes);
 app.use('/api/market', marketroutes);
 app.use('/api/schemes', schemeRoutes);
 app.use('/api/requirements', buyerSellerRoutes );
+app.use('/api/services', agriServiceRoutes);
+
 
 
 // CRON JOBS
