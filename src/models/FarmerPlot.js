@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 
 const farmerPlotSchema = new mongoose.Schema({
   farmerId: { type: mongoose.Schema.Types.ObjectId, ref: "Farmer" },
+  farmName : String,
   cropName: String,
   variety: String,
   sowingDate: Date,

@@ -3,6 +3,7 @@ const FarmerPlot = require("../models/FarmerPlot");
 const CropEvent = require("../models/CropEvent");
 const { generateCropCalendar } = require("../utils/generateCalender");
 const cropTemplates = require("../data/cropCalender");
+const { default: mongoose } = require('mongoose');
 
 //  GET FARMER PROFILE
 
@@ -48,13 +49,15 @@ const updateFarmer = async (req, res) => {
 
 const addCropToFarmer = async (req, res) => {
   try {
-    const { farmerId, cropName, variety, sowingDate } = req.body;
+    const farmerId = req.farmerId;
+    const { cropName, variety, sowingDate,  farmName } = req.body;
 
     const plot = await FarmerPlot.create({
       farmerId,
       cropName,
       variety,
-      sowingDate
+      sowingDate,
+      farmName
     });
 
     // ---- GENERATE CALENDAR ----
@@ -77,7 +80,8 @@ const addCropToFarmer = async (req, res) => {
         title: item.title,
         description: item.title,
         dueDate: due,
-        alertBefore: item.alertBefore
+        alertBefore: item.alertBefore,
+        advice: item.advice
       });
     });
     console.log("These are the events to be saved here",eventsToSave)
@@ -99,4 +103,98 @@ const addCropToFarmer = async (req, res) => {
   }
 };
 
-module.exports = { getFarmer, updateFarmer, addCropToFarmer };
+const showFarms = async(req , res)=>{
+  const farmerId = req.farmerId;
+  console.log("We are here");
+
+  try{
+  const farms = await FarmerPlot.find({ farmerId }).select({
+  farmName: 1,
+  sowingDate: 1,
+  cropName: 1,
+  variety: 1,
+
+});
+
+    res.json({
+      message: "Fetch successful",
+      farms      
+    });
+
+  }catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+}
+
+
+const showParticularFarm = async (req, res) => {
+  const farmerId = req.farmerId;
+  const { id } = req.params;
+
+  try {
+    const [farm] = await FarmerPlot.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(id),
+          farmerId: new mongoose.Types.ObjectId(farmerId),
+        },
+      },
+      {
+        $lookup: {
+          from: "cropevents",              // collection name in MongoDB
+          localField: "calendar",          // array of ObjectId
+          foreignField: "_id",
+          as: "calendarEvents",
+        },
+      },
+      {
+        $addFields: {
+          eventsByDate: {
+            $map: {
+              input: "$calendarEvents",
+              as: "ev",
+              in: {
+                _id: "$$ev._id",
+                title: "$$ev.title",
+                type: "$$ev.type",
+                dueDate: "$$ev.dueDate",
+                isCompleted: "$$ev.isCompleted",
+                advice : "$$ev.advice",
+                dateKey: {
+                  $dateToString: { format: "%Y-%m-%d", date: "$$ev.dueDate" },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          farmerId: 1,
+          farmName: 1,
+          cropName: 1,
+          variety: 1,
+          sowingDate: 1,
+          image: 1,
+          // flat list for your React calendar
+          events: "$eventsByDate",
+        },
+      },
+    ]); // [web:43][web:56][web:58]
+
+    if (!farm) {
+      return res.status(404).json({ error: "Farm not found" });
+    }
+
+    res.json({
+      message: "Fetch successful",
+      farm,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+module.exports = { getFarmer, updateFarmer, addCropToFarmer , showFarms, showParticularFarm};

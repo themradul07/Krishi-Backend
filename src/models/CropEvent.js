@@ -3,8 +3,9 @@ const mongoose = require("mongoose");
 const cropEventSchema = new mongoose.Schema({
   plotId: { type: mongoose.Schema.Types.ObjectId, ref: "FarmerPlot" },
   title: String,
-  type: String, // irrigation, pest, fertilizer, harvest
+  type: String, 
   dueDate: Date,
+  advice: String,
   isCompleted: { type: Boolean, default: false }
 });
 
