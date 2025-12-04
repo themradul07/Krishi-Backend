@@ -86,7 +86,49 @@ const updateTask = async (req, res) => {
     }
 };
 
+const getplots = async(req, res) =>{
+  try{
+    const plots = await FarmerPlot.find({farmerId:req.farmerId}).select({
+      farmName:1,
+      _id:1
+    });
+    console.log(plots);
+    res.json(plots);
+  }catch(err){
+    console.log(err);
+    res.json(err);
+  }
+
+}
+
+const createTask = async (req, res) => {
+  try {
+    console.log("this is the body", req.body);
+    
+    // Create and save CropEvent
+    const event = await CropEvent.create(req.body);
+    
+    // Find the FarmerPlot by ID
+    const plot = await FarmerPlot.findById(req.body.plotId);
+    if (!plot) {
+      return res.status(404).json({ message: "Plot not found" });
+    }
+    
+    // Add event ID to calendar array
+    plot.calendar.push(event._id);
+    
+    // Save the updated plot
+    await plot.save();
+    
+    // Send success response
+    res.status(201).json(event);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 
 
-module.exports = { getTasks , updateTask };
+
+module.exports = { getTasks , updateTask,  getplots, createTask };

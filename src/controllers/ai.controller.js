@@ -103,7 +103,7 @@ Return ONLY the JSON object.
 
     // Create Gemini chat session
     const chat = ai.chats.create({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash",
       history
     });
 
@@ -375,7 +375,7 @@ return an array with 3-5 advices of one liner in english. Answer in JSON format 
 
     // Create Gemini chat session
     const advisory = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash-lite",
       contents: basePrompt,
       config: {
         systemInstruction: "You are a Kisihi Sakhi Advisory System",
