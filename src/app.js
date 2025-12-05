@@ -17,6 +17,8 @@ const buyerSellerRoutes = require('./routes/contract.routes');
 const agriServiceRoutes = require('./routes/agriService.routes');
 const cropOperatoionsAlert = require('./cron/cropOperations.cron');
 const taskRoutes = require('./routes/tasks.routes');
+const fertilizerRoutes = require('./routes/fertilizer.routes');
+
 
 
 
@@ -39,6 +41,9 @@ app.use('/api/schemes', schemeRoutes);
 app.use('/api/requirements', buyerSellerRoutes );
 app.use('/api/services', agriServiceRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/fertilizer', fertilizerRoutes);
+
+app.use("/api/soil", require("./routes/soil.routes"));
 
 
 
