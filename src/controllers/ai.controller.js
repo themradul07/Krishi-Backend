@@ -50,7 +50,7 @@ Farmer Details:
 - crop: ${farmer.crop ?? "Paddy"}
 - soil: ${farmer.soilType ?? "Clay"}
 - location: ${farmer.location}
-
+- landSize: ${farmer.landSize ?? "2 acres"}
 ${activities.length
         ? "Recent Activities:\n" + activities
           .map(a => `- ${a.type || a.activity} at ${a.timestamp.toISOString()}`)
@@ -179,16 +179,125 @@ Return ONLY the JSON object.
   }
 };
 
-const detectCropDisease= async (req, res) => {
+// Replace your existing detectCropDisease with this improved version.
+// This includes fallback default doses per disease and computes personalized total quantity.
+
+const detectCropDisease = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image file uploaded' });
     }
 
+    // ---------- Helpers (minimal copies - remove if you already have these above) ----------
+    const ACRES_PER_HECTARE = 2.47105;
+
+    function parseLandSizeToAcres(landSizeRaw) {
+      if (!landSizeRaw) return 1;
+      const s = String(landSizeRaw).trim().toLowerCase().replace(/,/g, '');
+      const m = s.match(/([\d.]+)\s*(ha|hectare|hectares|acre|ac|acres)?/i);
+      if (!m) return 1;
+      const value = parseFloat(m[1]) || 1;
+      const unit = (m[2] || "").toLowerCase();
+      if (unit.startsWith("ha") || unit.startsWith("hect")) return value * ACRES_PER_HECTARE;
+      return value;
+    }
+
+    function parseQuantityString(qRaw) {
+      if (!qRaw || typeof qRaw !== "string") return null;
+      const q = qRaw.replace(/\s+/g, " ").trim().toLowerCase();
+      const normalized = q.replace(/\//g, " per ");
+      const rx = /([\d.,]+)\s*(g|gram|grams|kg|kilogram|kilograms|ml|milliliter|milliliters|l|litre|liter|litres|liters|packet|packets|unit|units)?(?:\s*per\s*(acre|ac|hectare|ha))?/i;
+      const m = normalized.match(rx);
+      if (!m) return null;
+      const amount = parseFloat(m[1].replace(/,/g, ''));
+      let unit = (m[2] || "g").toLowerCase();
+      let per = (m[3] || "acre").toLowerCase();
+
+      if (unit.startsWith("gram")) unit = "g";
+      if (unit === "kg" || unit.startsWith("kilogram")) unit = "kg";
+      if (unit.startsWith("ml") || unit.startsWith("milliliter")) unit = "ml";
+      if (unit === "l" || unit.startsWith("litre") || unit.startsWith("liter")) unit = "l";
+      if (unit.startsWith("pack")) unit = "packet";
+      if (unit.startsWith("unit")) unit = "unit";
+
+      if (per === "ac") per = "acre";
+      if (per.startsWith("hect")) per = "ha";
+
+      return { amount: Number(amount), unit, per, raw: qRaw };
+    }
+
+    function formatAmount(amount, unit) {
+      if (amount === null || amount === undefined || Number.isNaN(amount)) return "";
+      const roundSmart = v => (Math.abs(v) >= 100 ? Math.round(v) : Math.abs(v) >= 10 ? Math.round(v * 10) / 10 : Math.round(v * 100) / 100);
+      if (unit === "kg" && Math.abs(amount) < 1) return `${roundSmart(amount * 1000)} g`;
+      if (unit === "l" && Math.abs(amount) < 1) return `${roundSmart(amount * 1000)} ml`;
+      return `${roundSmart(amount)} ${unit}`;
+    }
+
+    function computeTotalQuantity(parsedQty, farmerAcres) {
+      if (!parsedQty || parsedQty.amount === undefined || parsedQty.amount === null) return null;
+      let { amount, unit, per } = parsedQty;
+      if (per === "ha") {
+        amount = amount / ACRES_PER_HECTARE;
+        per = "acre";
+      }
+      const areaBased = (per === "acre" || per === "ha");
+      if (!areaBased) {
+        return {
+          perAcDose: formatAmount(amount, unit),
+          perUnit: per,
+          totalAmount: null,
+          totalUnit: null,
+          totalFormatted: null,
+          farmerAcres,
+          note: "quantity not area-based"
+        };
+      }
+      const amountPerAcre = amount;
+      const totalRaw = amountPerAcre * farmerAcres;
+      let displayUnit = unit;
+      let displayAmount = totalRaw;
+      if (unit === "g" && Math.abs(totalRaw) >= 1000) {
+        displayAmount = totalRaw / 1000;
+        displayUnit = "kg";
+      }
+      if (unit === "ml" && Math.abs(totalRaw) >= 1000) {
+        displayAmount = totalRaw / 1000;
+        displayUnit = "l";
+      }
+      return {
+        perAcDose: formatAmount(amountPerAcre, unit),
+        perUnit: "acre",
+        totalAmount: displayAmount,
+        totalUnit: displayUnit,
+        totalFormatted: formatAmount(displayAmount, displayUnit),
+        farmerAcres,
+      };
+    }
+    // ---------- end helpers ----------
+
+    // Fallback default doses per disease (per acre). Adjust values to your local recommendations
+    const DEFAULT_DOSES = {
+      // diseaseKey: { amount: Number, unit: 'g'|'kg'|'ml'|'l', per: 'acre'|'ha' }
+      "rice brown spot": { amount: 300, unit: "g", per: "acre" }, // example: 300 g per acre tricyclazole
+      "brown spot": { amount: 300, unit: "g", per: "acre" },
+      "blast": { amount: 250, unit: "g", per: "acre" },
+      "sheath blight": { amount: 400, unit: "g", per: "acre" },
+      // add other disease defaults as required
+    };
+
+    // Try to find farmer
+    const farmerId = req.farmerId;
+    const farmer = farmerId ? await Farmer.findById(farmerId) : null;
+    const landSizeRaw = farmer?.landSize || farmer?.landsize || null;
+    const farmerAcres = parseLandSizeToAcres(landSizeRaw);
+
+    // Read & send image to AI
     const fileBuffer = req.file.buffer;
     const mimeType = req.file.mimetype;
-
     const base64Image = fileBuffer.toString('base64');
+
+    console.log("rUNNING DISEASE DETECTION FOR FARMER:", farmerId || "unknown");
 
     const contents = [
       {
@@ -198,19 +307,38 @@ const detectCropDisease= async (req, res) => {
         },
       },
       {
-        text: `Analyze the crop image and return result ONLY in pure JSON (no text, no backticks):
+        text: `Analyze the crop image and return result ONLY in pure JSON (no text, no backticks).
 
-      
+Return JSON exactly in this structure:
 
 {
-  "disease": "Disease Name",
+  "disease": "Disease Name or 'No disease detected'",
   "confidence": 80,
   "severity": "Low/Moderate/High",
+  "stage": "Early/Mid/Late/Unknown",
   "treatment": ["Step 1", "Step 2"],
-  "prevention": ["Tip 1", "Tip 2"]
+  "prevention": ["Tip 1", "Tip 2"],
+  "Fertilizers": ["Fertilizer 1", "Fertilizer 2"],
+  "Quantity": "Amount of fungicide/pesticide to be used for ${farmer.landsize} acres. Always give quantity in grams (g) or kilograms (kg)."
 }
-  if the image is not related to crop and plants then simply return in the disease name that no disease is detected and all the remaining fields blank.
-Return only valid JSON.`
+
+Rules:
+- If the image is NOT related to crops or plants → return:
+  "disease": "No disease detected",
+  "confidence": 0,
+  "severity": "Low",
+  "stage": "Unknown",
+  all arrays empty,
+  "Quantity": "".
+
+- Disease stage must be determined visually based on symptoms:
+  - "Early" → small lesions, initial color changes  
+  - "Mid" → spreading spots, visible damage  
+  - "Late" → severe spread, dying leaves, advanced infection  
+  - "Unknown" → unsure stage
+
+Return ONLY valid JSON with no extra text.`
+
       }
     ];
 
@@ -219,13 +347,10 @@ Return only valid JSON.`
       contents
     });
 
-    let raw = response.text;
-    console.log("AI raw response:", raw);
-
+    let raw = response?.text || response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
     raw = raw.replace(/```json/g, '').replace(/```/g, '').trim();
 
     let parsed;
-
     try {
       parsed = JSON.parse(raw);
     } catch (err) {
@@ -233,6 +358,56 @@ Return only valid JSON.`
         error: "Failed to parse AI JSON",
         rawResponse: raw
       });
+    }
+
+    // If the AI did not provide a Quantity or it couldn't be parsed, use default dose for the disease
+    let parsedQty = parseQuantityString(parsed.Quantity || parsed.quantity || "");
+    let usedFallback = false;
+
+    if (!parsedQty || !parsedQty.amount) {
+      // try match disease to a default dose
+      const diseaseKey = String(parsed.disease || "").trim().toLowerCase();
+      const defaultDose = DEFAULT_DOSES[diseaseKey] || null;
+
+      if (defaultDose) {
+        parsedQty = {
+          amount: defaultDose.amount,
+          unit: defaultDose.unit,
+          per: defaultDose.per,
+          raw: `default for ${diseaseKey}`
+        };
+        usedFallback = true;
+      }
+    }
+
+    // compute personalization
+    const personalization = computeTotalQuantity(parsedQty, farmerAcres);
+
+    // Attach computed personalization
+    parsed._personalization = {
+      farmerId: farmerId || null,
+      landSizeRaw: landSizeRaw || null,
+      farmerAcres,
+      parsedQuantity: parsedQty || null,
+      computed: personalization || null,
+      usedFallback // true if we used default dose
+    };
+
+    // Provide top-level fields for frontend
+    if (personalization) {
+      parsed.quantityPerUnit = personalization.perAcDose; // e.g. "300 g"
+      parsed.quantityUnit = personalization.perUnit; // "acre"
+      parsed.totalQuantity = personalization.totalFormatted; // e.g. "600 g" or "0.6 kg"
+      parsed.totalQuantityNumeric = personalization.totalAmount;
+      parsed.totalQuantityUnit = personalization.totalUnit;
+    } else {
+      parsed.quantityPerUnit = parsed.Quantity || parsed.quantity || "";
+      parsed.totalQuantity = "";
+    }
+
+    // Add a small message to inform frontend (optional)
+    if (usedFallback) {
+      parsed.note = `Used default per-area dose for "${parsed.disease}" to compute totals. Please follow local extension recommendations or product label.`;
     }
 
     res.json(parsed);
@@ -243,8 +418,11 @@ Return only valid JSON.`
   }
 };
 
+
 const detectPest  = async (req, res) => {
   try {
+    const farmerId = req.farmerId;
+    const farmer = await Farmer.findById(farmerId);
     if (!req.file) {
       return res.status(400).json({ error: 'No image file uploaded' });
     }
@@ -263,14 +441,16 @@ const detectPest  = async (req, res) => {
       },
       {
         text: `Analyze the given image and identify if there is any pest affecting the plant.  
-- If the image contains a pest on a plant, return a detailed JSON with pest name, confidence score (0-100), severity level (Low, Moderate, or High), recommended treatment steps, and prevention tips, formatted exactly as below:
+- If the image contains a pest on a plant, return a detailed JSON with pest name, confidence score (0-100), severity level (Low, Moderate, or High), recommended treatment steps, and prevention tips,"Quantity": "Amount of fungicide/pesticide to be used for farmer.landsize", formatted exactly as below:
 
 {
   "Pest": "Pest Name",
   "confidence": 80,
   "severity": "Low/Moderate/High",
   "treatment": ["Step 1", "Step 2"],
-  "prevention": ["Tip 1", "Tip 2"]
+  "prevention": ["Tip 1", "Tip 2"],
+  "Pesticides" : ["Pesticide 1", "Pesticide 2"],
+  "Quantity": "Amount of fungicide/pesticide to be used for ${farmer.landsize} in acres and please provide the quantity in grams or kilograms.",
 }
 
 - If the image is related to a plant but no pest is detected, return a valid JSON with an error message field:

@@ -7,8 +7,8 @@ const upload = require('../config/multer');
 
 
 router.post('/generate', auth , generate);
-router.post('/detect-crop-disease', upload.single('image'), detectCropDisease);
-router.post('/detect-pest-disease', upload.single('image'), detectPest);
+router.post('/detect-crop-disease', auth ,upload.single('image'), detectCropDisease);
+router.post('/detect-pest-disease', auth , upload.single('image'), detectPest);
 router.post('/generate-advisory', auth, generateAdvisory);
 router.post("/stt", upload.single("audio"), transcribeAudio);
 router.post('/generate-suggestions', auth, generateSuggestion);

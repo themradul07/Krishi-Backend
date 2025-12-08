@@ -13,6 +13,8 @@ const schemeSchema = new mongoose.Schema({
     crops: [String],
     irrigationRequired: Boolean,
     incomeLimit: Number,
+    maxAge : Number,
+    caste: [String],
   },
   documents: [String],
   deadline: Date,

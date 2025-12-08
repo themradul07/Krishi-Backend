@@ -139,61 +139,151 @@ const deleteScheme = async (req, res) => {
 // Eligibility Checker
 // ------------------
 
-function isFarmerEligible(farmer, scheme, age, income) {
+// function isFarmerEligible(farmer, scheme, age, income) {
+//   const e = scheme.eligibility;
+
+//   // 1. Age check
+//   console.log("this is the schema age" , e.maxAge , " this is fected" , age )
+//   console.log("this is the age check" ,e.maxAge && age > e.maxAge)
+//   if (e.maxAge && age > e.maxAge) return false;
+
+//   // 2. Income check
+//   // console.log("this is the income limit : " , e.incomeLimit && income > e.incomeLimit)
+//   if (e.incomeLimit && income > e.incomeLimit) return false;
+
+//   //caste
+//   if (e.caste && e.caste.length > 0) {
+//     if (!e.caste.includes(farmer.caste)) return false;
+//   }
+
+//   // // 3. State check
+//   // if (e.state && e.state !== "All India") {
+//   //   if (farmer.location.state !== e.state) return false;
+//   // }
+
+//   // 4. District check
+//   // if (e.district && e.district.length > 0) {
+//   //   if (!e.district.includes(farmer.location.district)) return false;
+//   // }
+
+//   // 5. Land size check
+//   const land = parseFloat(farmer.landSize || 0);
+
+//   if (e.minLand && land < e.minLand) return false;
+//   if (e.maxLand && land > e.maxLand) return false;
+
+//   // 6. Crop check
+//   if (e.crops && e.crops.length > 0) {
+//     if (!e.crops.includes(farmer.primaryCrop)) return false;
+//   }
+
+//   // 7. Irrigation check
+//   // if (e.irrigationRequired && farmer.irrigation !== "yes") {
+//   //   return false;
+//   // }
+
+//   return true;
+// }
+
+// // ------------------
+// // Controller Function
+// // ------------------
+
+// const getEligibleSchemes = async (req, res) => {
+//   try {
+//     const farmerId = req.farmerId;
+//     console.log("this is the req" ,req.body);
+//     const { age, income ,caste} = req.body;
+
+//     if (!age || !income || !caste) {
+//       return res.status(400).json({ message: "Age,.Caste and income required" });
+//     }
+
+//     const farmer = await Farmer.findById(farmerId);
+//     if (!farmer) {
+//       return res.status(404).json({ message: "Farmer not found" });
+//     }
+
+//     const schemes = await Scheme.find();
+
+//     const matchedSchemes = schemes.filter((scheme) =>
+//       isFarmerEligible(farmer, scheme, age, income,caste)
+//     );
+
+//     return res.json({
+//       farmer: farmer.name,
+//       eligibleSchemes: matchedSchemes
+//     });
+
+//   } catch (err) {
+//     console.error("Eligibility error:", err);
+//     return res.status(500).json({ message: "Server error" });
+//   }
+// };
+
+function isFarmerEligible(farmer, scheme, age, income, caste) {
   const e = scheme.eligibility;
 
-  // 1. Age check
-  if (e.minAge && age < e.minAge) return false;
-  if (e.maxAge && age > e.maxAge) return false;
-
-  // 2. Income check
-  if (e.incomeLimit && income > e.incomeLimit) return false;
-
-  //caste
-  if (e.caste && e.caste.length > 0) {
-    if (!e.caste.includes(farmer.caste)) return false;
+  // --------------------------
+  // 1. AGE CHECK
+  // --------------------------
+  if (e.age) {
+    if (e.age.min !== undefined && age < e.age.min) return false;
+    if (e.age.max !== undefined && age > e.age.max) return false;
   }
 
-  // // 3. State check
-  // if (e.state && e.state !== "All India") {
-  //   if (farmer.location.state !== e.state) return false;
-  // }
+  // --------------------------
+  // 2. INCOME CHECK
+  // --------------------------
+  // If incomeLimit = null → no restriction
+  if (e.incomeLimit !== null && income > e.incomeLimit) {
+    return false;
+  }
 
-  // 4. District check
-  // if (e.district && e.district.length > 0) {
-  //   if (!e.district.includes(farmer.location.district)) return false;
-  // }
+  // --------------------------
+  // 3. CASTE CHECK
+  // --------------------------
+  if (e.caste && Array.isArray(e.caste) && e.caste.length > 0) {
+    if (!e.caste.includes(caste)) return false;
+  }
 
-  // 5. Land size check
-  const land = parseFloat(farmer.landSize || 0);
+  // --------------------------
+  // 4. LAND CHECK
+  // --------------------------
+  const land = Number(farmer.landSize || 0);
 
-  if (e.minLand && land < e.minLand) return false;
-  if (e.maxLand && land > e.maxLand) return false;
+  if (e.minLand !== null && land < e.minLand) return false;
+  if (e.maxLand !== null && land > e.maxLand) return false;
 
-  // 6. Crop check
+  // --------------------------
+  // 5. CROPS CHECK
+  // --------------------------
   if (e.crops && e.crops.length > 0) {
     if (!e.crops.includes(farmer.primaryCrop)) return false;
   }
 
-  // 7. Irrigation check
-  // if (e.irrigationRequired && farmer.irrigation !== "yes") {
-  //   return false;
-  // }
+  // --------------------------
+  // 6. IRRIGATION CHECK
+  // --------------------------
+  if (e.irrigationRequired === true) {
+    if (farmer.irrigation !== "yes") return false;
+  }
 
   return true;
 }
 
-// ------------------
-// Controller Function
-// ------------------
-
 const getEligibleSchemes = async (req, res) => {
   try {
-    const { farmerId } = req.params;
-    const { age, income ,caste} = req.body;
+    const farmerId = req.farmerId;
+    // console.log("this is the req" ,req.body);
 
-    if (!age || !income || !caste) {
-      return res.status(400).json({ message: "Age,.Caste and income required" });
+    const { age, income, caste } = req.body;
+    
+  
+
+    // console.log("this is the age" , age , " this is income " , income , " this is caste " , caste)
+    if (age == null || income == null || !caste) {
+      return res.status(400).json({ message: "Age, caste, and income are required" });
     }
 
     const farmer = await Farmer.findById(farmerId);
@@ -201,11 +291,16 @@ const getEligibleSchemes = async (req, res) => {
       return res.status(404).json({ message: "Farmer not found" });
     }
 
+    // console.log("this is the farmer" , farmer)
+
     const schemes = await Scheme.find();
+    console.log("this is the schemes" , schemes)
 
     const matchedSchemes = schemes.filter((scheme) =>
-      isFarmerEligible(farmer, scheme, age, income,caste)
+      isFarmerEligible(farmer, scheme, Number(age), Number(income), caste)
     );
+
+    console.log("this is the matched schemes" , matchedSchemes)
 
     return res.json({
       farmer: farmer.name,
