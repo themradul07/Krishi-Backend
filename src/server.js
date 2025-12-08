@@ -12,7 +12,7 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/krishi";
     res.send("API is running...");
   });
 
-  app.listen(PORT, () =>
-    console.log(`Server listening on port ${PORT}`)
-  );
+app.listen(PORT, "0.0.0.0", () =>
+  console.log(`Server listening on port ${PORT}`)
+);
 })();

@@ -11,6 +11,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { ElevenLabsClient } = require('@elevenlabs/elevenlabs-js');
+const { default: mongoose } = require("mongoose");
 
 // Initialize ElevenLabs client once at the module level, not in handler
 const elevenlabs = new ElevenLabsClient({
@@ -103,7 +104,7 @@ Return ONLY the JSON object.
 
     // Create Gemini chat session
     const chat = ai.chats.create({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       history
     });
 
@@ -471,12 +472,16 @@ const transcribeAudio = async (req, res) => {
 const generateSuggestion = async (req, res) => {
   try {
     const farmerId = req.farmerId;
+    const plotId = req.body.plotId;
+    console.log("This is the plot ID" ,plotId)
     if (!farmerId) return res.status(400).json({ message: 'Missing fields' });
 
     const farmer = await Farmer.findById(farmerId);
     if (!farmer) {
       return res.status(404).json({ message: 'Farmer not found' });
     }
+
+    // const bodyPlotId =new mongoose.Types.ObjectId(plotId);
 
     const activities = await Activity.find({ farmerId })
       .sort({ timestamp: -1 })

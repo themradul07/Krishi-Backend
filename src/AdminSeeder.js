@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const Admin = require("./models/Admin");
 
 // 👉 UPDATE THIS
-const MONGO_URI = "mongodb://localhost:27017/Krishi";
+const MONGO_URI = "mongodb://localhost:27017/krishi";
 
 async function seedAdmin() {
   try {
