@@ -23,6 +23,7 @@
 //     console.log(`Farmer: ${farmer.name}, Weather: ${weather}`);
 //     const phone = farmer.phone;
 //     if(!phone) continue;
+//     console.log("Weather for", farmer.name, "is", weather); 
 
 //     // 2. DECISION LOGIC
 //     if (weather === "Rain" || weather === "Thunderstorm"|| weather === "Haze") {

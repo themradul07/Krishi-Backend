@@ -17,11 +17,13 @@
     
 
 //     for (const event of dueEvents) {
-//         const farmer = await Farmer.find({_id:event.plotId.farmerId});
-//         console.log(farmer);
-//         if (!farmer.phone ) continue;
+//         const [farmer, ...rest] = await Farmer.find({_id:event.plotId.farmerId});
+//         console.log("thid is the farmer" ,farmer);
+//         // if (!farmer.phone ) continue;
 //         console.log(dueEvents);
+//         console.log("Sending alert for:", event.title);
 //         await sendWhatsApp(farmer.phone ,  event.title);      
+//         console.log("Alert sent to farmer:", farmer.name);
 //     }
     
 //     console.log(`Checked ${dueEvents.length} due events at ${now}`);
