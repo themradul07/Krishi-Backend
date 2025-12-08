@@ -1,7 +1,17 @@
 // routes/pesticides.js
 const express = require("express");
 const router = express.Router();
-const Pesticide = require("../models/pesticideModel");
+const Pesticide = require("../models/pesticide.model");
+
+// GET all pesticides
+router.get("/", async (req, res) => {
+  try {
+    const pesticides = await Pesticide.find();
+    res.json(pesticides);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // GET pesticide by name
 router.get("/:name", async (req, res) => {

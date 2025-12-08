@@ -1,4 +1,6 @@
 const Scheme = require("../models/scheme");
+const Farmer = require("../models/Farmer");
+
 
 // Build dynamic filters
 const buildFilters = (query) => {
@@ -130,4 +132,96 @@ const deleteScheme = async (req, res) => {
   }
 };
 
-module.exports = {  getSchemes, createScheme, getSchemeById, updateScheme, deleteScheme };
+
+
+
+// ------------------
+// Eligibility Checker
+// ------------------
+
+function isFarmerEligible(farmer, scheme, age, income) {
+  const e = scheme.eligibility;
+
+  // 1. Age check
+  if (e.minAge && age < e.minAge) return false;
+  if (e.maxAge && age > e.maxAge) return false;
+
+  // 2. Income check
+  if (e.incomeLimit && income > e.incomeLimit) return false;
+
+  //caste
+  if (e.caste && e.caste.length > 0) {
+    if (!e.caste.includes(farmer.caste)) return false;
+  }
+
+  // // 3. State check
+  // if (e.state && e.state !== "All India") {
+  //   if (farmer.location.state !== e.state) return false;
+  // }
+
+  // 4. District check
+  // if (e.district && e.district.length > 0) {
+  //   if (!e.district.includes(farmer.location.district)) return false;
+  // }
+
+  // 5. Land size check
+  const land = parseFloat(farmer.landSize || 0);
+
+  if (e.minLand && land < e.minLand) return false;
+  if (e.maxLand && land > e.maxLand) return false;
+
+  // 6. Crop check
+  if (e.crops && e.crops.length > 0) {
+    if (!e.crops.includes(farmer.primaryCrop)) return false;
+  }
+
+  // 7. Irrigation check
+  // if (e.irrigationRequired && farmer.irrigation !== "yes") {
+  //   return false;
+  // }
+
+  return true;
+}
+
+// ------------------
+// Controller Function
+// ------------------
+
+const getEligibleSchemes = async (req, res) => {
+  try {
+    const { farmerId } = req.params;
+    const { age, income ,caste} = req.body;
+
+    if (!age || !income || !caste) {
+      return res.status(400).json({ message: "Age,.Caste and income required" });
+    }
+
+    const farmer = await Farmer.findById(farmerId);
+    if (!farmer) {
+      return res.status(404).json({ message: "Farmer not found" });
+    }
+
+    const schemes = await Scheme.find();
+
+    const matchedSchemes = schemes.filter((scheme) =>
+      isFarmerEligible(farmer, scheme, age, income,caste)
+    );
+
+    return res.json({
+      farmer: farmer.name,
+      eligibleSchemes: matchedSchemes
+    });
+
+  } catch (err) {
+    console.error("Eligibility error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
+
+
+
+module.exports = {  getSchemes, createScheme, getSchemeById, updateScheme, deleteScheme,getEligibleSchemes };
