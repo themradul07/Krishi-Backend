@@ -15,7 +15,7 @@ const { default: mongoose } = require("mongoose");
 
 // Initialize ElevenLabs client once at the module level, not in handler
 const elevenlabs = new ElevenLabsClient({
-   apiKey: process.env.ELEVEN_LABS_API_KEY, 
+  apiKey: process.env.ELEVEN_LABS_API_KEY,
 });
 
 
@@ -409,6 +409,13 @@ Return ONLY valid JSON with no extra text.`
     if (usedFallback) {
       parsed.note = `Used default per-area dose for "${parsed.disease}" to compute totals. Please follow local extension recommendations or product label.`;
     }
+    const activity = await Activity.create({
+      farmerId,
+      type: " Crop Disease Detection",
+      note: ` Crop Disease Detection: ${parsed.disease || "Unknown"} (used default dose: ${usedFallback})`
+    })
+
+    activity.save();
 
     res.json(parsed);
 
@@ -419,7 +426,7 @@ Return ONLY valid JSON with no extra text.`
 };
 
 
-const detectPest  = async (req, res) => {
+const detectPest = async (req, res) => {
   try {
     const farmerId = req.farmerId;
     const farmer = await Farmer.findById(farmerId);
@@ -490,6 +497,12 @@ Return only valid JSON, without any additional text or formatting.
         rawResponse: raw
       });
     }
+
+    const activity = await Activity.create({
+      farmerId,
+      type: " Pest Detection",
+      note: ` Pest Detection: ${parsed.pest || "Unknown"}`
+    })
 
     console.log("Parsed pest detection response:", parsed);
 
@@ -653,7 +666,7 @@ const generateSuggestion = async (req, res) => {
   try {
     const farmerId = req.farmerId;
     const plotId = req.body.plotId;
-    console.log("This is the plot ID" ,plotId)
+    console.log("This is the plot ID", plotId)
     if (!farmerId) return res.status(400).json({ message: 'Missing fields' });
 
     const farmer = await Farmer.findById(farmerId);
@@ -764,14 +777,102 @@ Provide output as a clean JSON array like:
 };
 
 
+const detectPesticide = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file uploaded" });
+    }
+
+    // Convert image
+    const base64Image = req.file.buffer.toString("base64");
+    const mimeType = req.file.mimetype;
+
+    console.log("Pesticide detection started...");
+
+    // -------------------- AI REQUEST --------------------
+    const contents = [
+      {
+        inlineData: { mimeType, data: base64Image }
+      },
+      {
+        text: `
+You are an expert in Indian agricultural pesticide regulation.
+
+Analyze the pesticide image and RETURN ONLY JSON (no explanation, no backticks).
+
+Use this structure:
+
+{
+  "name": "Detected pesticide name",
+  "activeIngredient": "Chemical ingredient",
+  "category": "Insecticide / Fungicide / Herbicide / Unknown",
+  "status": "Allowed / Restricted / Banned",
+  "confidence": 0-100,
+  "reason": "Explain why it is allowed/restricted/banned based on toxicity, safety guidelines, or regulatory patterns."
+}
+
+Rules to classify status:
+- "Banned": If known internationally banned, WHO class 1 toxicity, extremely hazardous, or banned in India.
+- "Restricted": Highly toxic (Class 2), allowed only with license, or restricted-use pesticide.
+- "Allowed": Low/medium toxicity, legally sold for general agricultural use.
+- If unsure: choose the safest classification and set status to "Restricted".
+
+If image is NOT a pesticide:
+Return:
+{
+  "name": "Unknown",
+  "activeIngredient": "",
+  "category": "Unknown",
+  "status": "Unknown",
+  "confidence": 0,
+  "reason": "Image does not appear to contain a pesticide or agrochemical product."
+}
+
+Return ONLY JSON.
+`
+      }
+    ];
+
+    const aiResp = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents
+    });
+
+    // Clean JSON
+    let raw =
+      aiResp?.text ||
+      aiResp?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "";
+
+    raw = raw.replace(/```json/g, "").replace(/```/g, "").trim();
+
+    // Parse JSON
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+      console.log("Pesticide detection parsed response:", parsed);
+    } catch (err) {
+      return res.status(500).json({
+        error: "AI returned invalid JSON",
+        raw
+      });
+    }
+
+    // -------------------- FINAL RESPONSE --------------------
+    return res.json({
+      name: parsed.name || "Unknown",
+      activeIngredient: parsed.activeIngredient || "",
+      category: parsed.category || "Unknown",
+      status: parsed.status || "Unknown",
+      confidence: parsed.confidence || 0,
+      reason: parsed.reason || ""
+    });
+
+  } catch (err) {
+    console.error("Error detecting pesticide:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 
-
-
-
-
-
-
-
-
-module.exports = { generate, detectCropDisease, generateAdvisory, detectPest, transcribeAudio, generateSuggestion };
+module.exports = { generate, detectCropDisease, generateAdvisory, detectPest, transcribeAudio, generateSuggestion, detectPesticide };

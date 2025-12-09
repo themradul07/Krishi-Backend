@@ -18,7 +18,9 @@ const farmerSchema = new mongoose.Schema({
   irrigation: { type: String, default: "" },
   primaryCrop: { type: String, default: " " },
   landSize: { type: String, default: "" },
-  plot: { type: mongoose.Schema.Types.ObjectId, ref: "FarmerPlot" }
+  plot: { type: mongoose.Schema.Types.ObjectId, ref: "FarmerPlot" },
+  // isbuyer: { type: Boolean, default: false },
+  role: { type: String, required: true }, // 'farmer', 'buyer', 'loan'
 });
 
 module.exports = mongoose.model("Farmer", farmerSchema);

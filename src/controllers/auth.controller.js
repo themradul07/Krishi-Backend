@@ -11,10 +11,10 @@ const Admin = require("../models/Admin");
 const register = async (req, res) => {
   try {
     console.log(req.body);
-    const { name, password, phone } = req.body;
+    const { name, password, phone ,role } = req.body;
 
     // Validate required fields
-    if (!name || !password || !phone) {
+    if (!name || !password || !phone || role===undefined) {
       return res.status(400).json({ message: 'Missing fields' });
     }
 
@@ -38,11 +38,12 @@ const register = async (req, res) => {
       password: hashed,
       phone,
       otp,
+      role
       
     });
 
     // Send OTP via WhatsApp (or SMS etc.)
-    await sendWhatsApp(phone, `Your OTP is ${otp}`);
+    // await sendWhatsApp(phone, `Your OTP is ${otp}`);
 
     // Create JWT
     const token = jwt.sign(
@@ -106,7 +107,8 @@ const login = async (req, res) => {
         message: "Admin logged in successfully",
         token,
         adminId: user._id,
-        role: "admin"
+        role: "admin",
+        isbuyer
       });
     }
 
@@ -131,18 +133,18 @@ const login = async (req, res) => {
     );
 
     // WhatsApp login alert
-    try {
-      await sendWhatsApp(phone, `Dear ${user.name}, you have successfully logged in to Krishi Sakhi.`);
-    } catch (err) {
-      console.log("WhatsApp send error:", err.message);
-    }
+    // try {
+    //   await sendWhatsApp(phone, `Dear ${user.name}, you have successfully logged in to Krishi Sakhi.`);
+    // } catch (err) {
+    //   console.log("WhatsApp send error:", err.message);
+    // }
 
     return res.json({
       success: true,
       message: "Logged in successfully!",
       token,
       farmerId: user._id,
-      role: "farmer"
+      role: user.role,
     });
 
   } catch (err) {

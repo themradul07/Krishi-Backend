@@ -20,6 +20,7 @@ const taskRoutes = require('./routes/tasks.routes');
 const fertilizerRoutes = require('./routes/fertilizer.routes');
 const pesticideRoutes = require('./routes/pesticides.routes');
 // app.use("/api/pesticides", require("./src/routes/pesticides.routes"));
+const ngoRoutes = require('./routes/ngo.routes')
 
 
 
@@ -48,6 +49,9 @@ app.use('/api/fertilizer', fertilizerRoutes);
 app.use('/api/pesticides', pesticideRoutes);
 
 app.use("/api/soil", require("./routes/soil.routes"));
+app.use("/api/ngo" ,  ngoRoutes);
+app.use("/api/loan", require("./routes/loan.routes"));
+
 
 
 
