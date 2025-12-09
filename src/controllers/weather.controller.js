@@ -1,9 +1,9 @@
-const { getWeather } = require('../services/weather.service');
+const { getWeather, reverseGeoLookup } = require('../services/weather.service');
 const { sendWhatsApp } = require("../services/whatsapp.service");
 
 
-//  MAIN WEATHER API
 
+// MAIN WEATHER API
 const weather = async (req, res) => {
   try {
     const { location } = req.params;
@@ -12,7 +12,13 @@ const weather = async (req, res) => {
     }
 
     const data = await getWeather(location, process.env.WEATHER_API_KEY);
-    res.json(data);
+
+    // return full forecast so frontend can read rainChance, humidity etc.
+    res.json({
+      location: data.location,
+      current: data.current,
+      forecast: data.forecast
+    });
 
   } catch (err) {
     console.error(err.response ? err.response.data : err.message);
@@ -20,12 +26,29 @@ const weather = async (req, res) => {
   }
 };
 
+// REVERSE GEOLOCATION (lat, lon -> nearest city)
+const reverseGeo = async (req, res) => {
+  try {
+    const { lat, lon } = req.query;
 
-//  TEST WEATHER ALERT (
+    if (!lat || !lon) {
+      return res.status(400).json({ message: "Missing lat/lon" });
+    }
 
+    const city = await reverseGeoLookup(lat, lon, process.env.WEATHER_API_KEY);
+
+    res.json({ location: city });
+
+  } catch (err) {
+    console.error(err.response ? err.response.data : err.message);
+    res.status(500).json({ message: "Reverse geo lookup failed" });
+  }
+};
+
+// TEST WEATHER ALERT
 const testWeatherAlert = async (req, res) => {
   try {
-    const phone = "+919140395305"; 
+    const phone = "+919140395305";
 
     await sendWhatsApp(
       "മഴ വരാൻ സാധ്യത. ഇന്നത്തെ എല്ലാ സ്പ്രേയും ഒഴിവാക്കുക.",
@@ -39,4 +62,4 @@ const testWeatherAlert = async (req, res) => {
   }
 };
 
-module.exports = { weather, testWeatherAlert };
+module.exports = { weather, reverseGeo, testWeatherAlert };
